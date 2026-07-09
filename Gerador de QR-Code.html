@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gerador de QR Code</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f4f8;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+      color: #1a1a1a;
+    }
+
+    header {
+      width: 100%;
+      max-width: 800px;
+      background: #1F5C99;
+      border-radius: 12px 12px 0 0;
+      padding: 1.25rem 1.75rem;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    header svg { flex-shrink: 0; }
+
+    header h1 {
+      color: #fff;
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+
+    header p {
+      color: #b8d4f0;
+      font-size: 13px;
+      margin-top: 2px;
+    }
+
+    main {
+      width: 100%;
+      max-width: 800px;
+      background: #fff;
+      border: 1px solid #d8e4f0;
+      padding: 2rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+
+    @media (max-width: 580px) {
+      main { grid-template-columns: 1fr; }
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: #555;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #ccd8e8;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      color: #1a1a1a;
+      background: #f8fafc;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus {
+      border-color: #1F5C99;
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(31,92,153,0.1);
+    }
+
+    textarea { resize: vertical; line-height: 1.5; }
+
+    .field { margin-bottom: 16px; }
+
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      accent-color: #1F5C99;
+      cursor: pointer;
+    }
+
+    .slider-val {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1F5C99;
+      min-width: 44px;
+      text-align: right;
+    }
+
+    .cores-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .cor-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s;
+      outline: none;
+    }
+
+    .cor-btn:hover { transform: scale(1.15); }
+    .cor-btn.ativa { border-color: #1a1a1a; }
+
+    .btn-primario {
+      width: 100%;
+      padding: 11px;
+      background: #1F5C99;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      margin-top: 4px;
+    }
+
+    .btn-primario:hover { background: #174d84; }
+    .btn-primario:active { transform: scale(0.98); }
+
+    .preview-card {
+      background: #f8fafc;
+      border: 1px dashed #b8cfe8;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 300px;
+      padding: 1.5rem;
+      gap: 10px;
+    }
+
+    .placeholder-icon {
+      opacity: 0.25;
+      margin-bottom: 8px;
+    }
+
+    .placeholder-txt {
+      color: #888;
+      font-size: 13px;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    #qr-output { display: none; flex-direction: column; align-items: center; gap: 10px; width: 100%; }
+
+    #qr-titulo-display {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1F5C99;
+      text-align: center;
+    }
+
+    #qr-canvas {
+      border-radius: 6px;
+      border: 1px solid #e0eaf5;
+    }
+
+    #qr-texto-display {
+      font-size: 11px;
+      color: #888;
+      text-align: center;
+      word-break: break-all;
+      max-width: 220px;
+    }
+
+    .btns-acao { display: none; flex-direction: column; gap: 8px; width: 100%; margin-top: 4px; }
+
+    .btn-download {
+      width: 100%;
+      padding: 9px;
+      background: #e8f2e8;
+      color: #1a5c1a;
+      border: 1px solid #b8d8b8;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-download:hover { background: #d0ebd0; }
+
+    .btn-limpar {
+      width: 100%;
+      padding: 9px;
+      background: transparent;
+      color: #888;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-limpar:hover { background: #f0f0f0; }
+
+    .historico-wrap { margin-top: 16px; display: none; }
+
+    .historico-titulo {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    .hist-item {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 7px 10px;
+      border: 1px solid #e0eaf5;
+      border-radius: 6px;
+      background: #f8fafc;
+      cursor: pointer;
+      font-size: 12px;
+      margin-bottom: 5px;
+      transition: background 0.15s;
+    }
+
+    .hist-item:hover { background: #e8f0fa; }
+
+    .hist-nome { font-weight: 600; color: #1F5C99; }
+    .hist-url { color: #888; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    footer {
+      width: 100%;
+      max-width: 800px;
+      background: #1a3f6b;
+      border-radius: 0 0 12px 12px;
+      padding: 0.85rem 1.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    footer span {
+      color: #7aaed4;
+      font-size: 12px;
+    }
+
+    footer strong { color: #b8d4f0; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="3" y="3" width="7" height="7" rx="1.2" stroke="#fff" stroke-width="1.8"/>
+      <rect x="14" y="3" width="7" height="7" rx="1.2" stroke="#fff" stroke-width="1.8"/>
+      <rect x="3" y="14" width="7" height="7" rx="1.2" stroke="#fff" stroke-width="1.8"/>
+      <rect x="5.2" y="5.2" width="2.6" height="2.6" rx="0.4" fill="#fff"/>
+      <rect x="16.2" y="5.2" width="2.6" height="2.6" rx="0.4" fill="#fff"/>
+      <rect x="5.2" y="16.2" width="2.6" height="2.6" rx="0.4" fill="#fff"/>
+      <rect x="14" y="14" width="2.5" height="2.5" rx="0.4" fill="#fff"/>
+      <rect x="17.5" y="14" width="3.5" height="1.5" rx="0.4" fill="#fff"/>
+      <rect x="14" y="17" width="1.5" height="4" rx="0.4" fill="#fff"/>
+      <rect x="17" y="17" width="4" height="1.5" rx="0.4" fill="#fff"/>
+      <rect x="19.5" y="19.5" width="1.5" height="1.5" rx="0.4" fill="#fff"/>
+    </svg>
+    <div>
+      <h1>Gerador de QR Code</h1>
+      <p>Para uso em sala de aula — gere, visualize e baixe</p>
+    </div>
+  </header>
+
+  <main>
+    <!-- Coluna esquerda: formulário -->
+    <div>
+      <div class="field">
+        <label for="titulo">Título do QR Code</label>
+        <input type="text" id="titulo" placeholder="Ex: Exercício 1 — Lógica de Programação" />
+      </div>
+
+      <div class="field">
+        <label for="conteudo">Conteúdo (URL ou texto)</label>
+        <textarea id="conteudo" rows="4" placeholder="https://exemplo.com ou qualquer texto"></textarea>
+      </div>
+
+      <div class="field">
+        <label>Tamanho</label>
+        <div class="slider-row">
+          <input type="range" id="tamanho" min="128" max="400" value="220" step="1" />
+          <span class="slider-val" id="tamanho-label">220px</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Cor do QR Code</label>
+        <div class="cores-row" id="cores">
+          <button class="cor-btn ativa" data-cor="#1F5C99" style="background:#1F5C99;" title="Azul SENAI"></button>
+          <button class="cor-btn" data-cor="#000000" style="background:#000000;" title="Preto"></button>
+          <button class="cor-btn" data-cor="#1D9E75" style="background:#1D9E75;" title="Verde"></button>
+          <button class="cor-btn" data-cor="#D85A30" style="background:#D85A30;" title="Laranja"></button>
+          <button class="cor-btn" data-cor="#993556" style="background:#993556;" title="Roxo"></button>
+          <button class="cor-btn" data-cor="#174d84" style="background:#174d84;" title="Azul escuro"></button>
+        </div>
+      </div>
+
+      <button class="btn-primario" id="btn-gerar">Gerar QR Code</button>
+
+      <!-- Histórico -->
+      <div class="historico-wrap" id="historico-wrap">
+        <p class="historico-titulo">Gerados nesta sessão</p>
+        <div id="historico"></div>
+      </div>
+    </div>
+
+    <!-- Coluna direita: preview -->
+    <div>
+      <div class="preview-card" id="preview-card">
+        <div id="qr-placeholder">
+          <svg class="placeholder-icon" width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="#1F5C99" stroke-width="1.2">
+            <rect x="3" y="3" width="7" height="7" rx="1"/>
+            <rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/>
+            <rect x="5" y="5" width="3" height="3" fill="#1F5C99"/>
+            <rect x="16" y="5" width="3" height="3" fill="#1F5C99"/>
+            <rect x="5" y="16" width="3" height="3" fill="#1F5C99"/>
+          </svg>
+          <p class="placeholder-txt">Preencha os campos ao lado<br>e clique em <strong>Gerar QR Code</strong></p>
+        </div>
+
+        <div id="qr-output">
+          <p id="qr-titulo-display"></p>
+          <canvas id="qr-canvas"></canvas>
+          <p id="qr-texto-display"></p>
+        </div>
+      </div>
+
+      <div class="btns-acao" id="btns-acao">
+        <button class="btn-download" id="btn-download">⬇ Baixar PNG</button>
+        <button class="btn-limpar" id="btn-limpar">Limpar</button>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <span>Gerador de QR Code para Sala de Aula</span>
+    <span>Criado por <strong>Vitor Lemos Moroni</strong></span>
+  </footer>
+
+  <script>
+    let corSelecionada = '#1F5C99';
+    let historico = [];
+
+    const tamanhoInput = document.getElementById('tamanho');
+    const tamanhoLabel = document.getElementById('tamanho-label');
+
+    tamanhoInput.addEventListener('input', () => {
+      tamanhoLabel.textContent = tamanhoInput.value + 'px';
+    });
+
+    document.querySelectorAll('.cor-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        corSelecionada = btn.dataset.cor;
+        document.querySelectorAll('.cor-btn').forEach(b => b.classList.remove('ativa'));
+        btn.classList.add('ativa');
+      });
+    });
+
+    document.getElementById('btn-gerar').addEventListener('click', () => {
+      const titulo = document.getElementById('titulo').value.trim();
+      const conteudo = document.getElementById('conteudo').value.trim();
+      const tamanho = parseInt(tamanhoInput.value);
+
+      if (!conteudo) {
+        document.getElementById('conteudo').focus();
+        document.getElementById('conteudo').style.borderColor = '#e24b4a';
+        setTimeout(() => document.getElementById('conteudo').style.borderColor = '', 1500);
+        return;
+      }
+
+      const canvas = document.getElementById('qr-canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = tamanho;
+      canvas.height = tamanho;
+      ctx.clearRect(0, 0, tamanho, tamanho);
+
+      const tmp = document.createElement('div');
+      tmp.style.display = 'none';
+      document.body.appendChild(tmp);
+
+      new QRCode(tmp, {
+        text: conteudo,
+        width: tamanho,
+        height: tamanho,
+        colorDark: corSelecionada,
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.H
+      });
+
+      setTimeout(() => {
+        const src = tmp.querySelector('img') || tmp.querySelector('canvas');
+        const tc = document.createElement('canvas');
+        tc.width = tamanho; tc.height = tamanho;
+        const tctx = tc.getContext('2d');
+        const draw = (el) => {
+          tctx.fillStyle = '#ffffff';
+          tctx.fillRect(0, 0, tamanho, tamanho);
+          tctx.drawImage(el, 0, 0, tamanho, tamanho);
+          ctx.drawImage(tc, 0, 0);
+          document.body.removeChild(tmp);
+        };
+        if (src.tagName === 'IMG') {
+          src.complete ? draw(src) : (src.onload = () => draw(src));
+        } else { draw(src); }
+
+        document.getElementById('qr-placeholder').style.display = 'none';
+        const out = document.getElementById('qr-output');
+        out.style.display = 'flex';
+        document.getElementById('qr-titulo-display').textContent = titulo || 'QR Code';
+        const txt = conteudo.length > 50 ? conteudo.slice(0, 50) + '…' : conteudo;
+        document.getElementById('qr-texto-display').textContent = txt;
+        document.getElementById('btns-acao').style.display = 'flex';
+
+        historico.unshift({ titulo: titulo || 'QR Code', conteudo, tamanho, cor: corSelecionada });
+        if (historico.length > 6) historico.pop();
+        renderHistorico();
+      }, 200);
+    });
+
+    document.getElementById('btn-download').addEventListener('click', () => {
+      const canvas = document.getElementById('qr-canvas');
+      const titulo = document.getElementById('titulo').value.trim() || 'qrcode';
+      const nome = titulo.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_\-]/g, '').toLowerCase() || 'qrcode';
+      const a = document.createElement('a');
+      a.download = nome + '.png';
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    });
+
+    document.getElementById('btn-limpar').addEventListener('click', () => {
+      document.getElementById('titulo').value = '';
+      document.getElementById('conteudo').value = '';
+      document.getElementById('qr-placeholder').style.display = 'block';
+      document.getElementById('qr-output').style.display = 'none';
+      document.getElementById('btns-acao').style.display = 'none';
+    });
+
+    function renderHistorico() {
+      const wrap = document.getElementById('historico-wrap');
+      const div = document.getElementById('historico');
+      if (!historico.length) { wrap.style.display = 'none'; return; }
+      wrap.style.display = 'block';
+      div.innerHTML = '';
+      historico.forEach(item => {
+        const el = document.createElement('div');
+        el.className = 'hist-item';
+        el.title = item.conteudo;
+        el.innerHTML = `<span class="hist-nome">${item.titulo}</span><span class="hist-url">${item.conteudo}</span>`;
+        el.addEventListener('click', () => {
+          document.getElementById('titulo').value = item.titulo === 'QR Code' ? '' : item.titulo;
+          document.getElementById('conteudo').value = item.conteudo;
+          tamanhoInput.value = item.tamanho;
+          tamanhoLabel.textContent = item.tamanho + 'px';
+          corSelecionada = item.cor;
+          document.querySelectorAll('.cor-btn').forEach(b => {
+            b.classList.toggle('ativa', b.dataset.cor === item.cor);
+          });
+          document.getElementById('btn-gerar').click();
+        });
+        div.appendChild(el);
+      });
+    }
+  </script>
+</body>
+</html>
